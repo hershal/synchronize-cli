@@ -1,6 +1,6 @@
 {
-  "name": "syn-cli",
-  "version": "1.0.0",
+  "name": "concurrent-cli",
+  "version": "0.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
