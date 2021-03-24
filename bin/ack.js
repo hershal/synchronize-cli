@@ -4,12 +4,31 @@ const ipc = require('node-ipc');
 const constants = require('../lib/constants.js');
 const debug = require('debug')('ack');
 
+const args = process.argv.slice(2);
+const topic = args.length == 0 ? 'default' : args[0];
+
 ipc.config.id = process.pid;
 ipc.config.retry = 1500;
 ipc.config.logger = () => {};
 
 startClientAsync();
 
+
+function handleSyn(data, socket, cb) {
+    if (data == topic) {
+        cb(data, socket);
+    }
+}
+
+function advertiseListen() {
+    debug('listening for ' + topic);
+}
+
+
+function handleSynClient(data, socket) {
+    debug('client got syn: ' + data);
+    stopClientAsync();
+}
 
 function startClientAsync() {
     ipc.connectTo(constants.appid, () => {
@@ -20,11 +39,11 @@ function startClientAsync() {
 
         ipc.of[constants.appid].on('connect', () => {
             debug('connected');
+            advertiseListen()
         });
 
         ipc.of[constants.appid].on(constants.opcodes.syn, (data, socket) => {
-            debug('client got syn: ' + data);
-            stopClientAsync();
+            handleSyn(data, socket, handleSynClient);
         });
     });
 }
@@ -44,17 +63,22 @@ function startServerAsync() {
 
     ipc.serve(() => {
         debug('starting server... done.');
+        advertiseListen();
 
         ipc.server.on(constants.opcodes.syn, (data, socket) => {
-            debug('server got syn: ' + data);
-            debug('broadcasting syn: ' + data);
-            ipc.server.broadcast(constants.opcodes.syn, data);
-            stopServerAsync();
+            handleSyn(data, socket, handleSynServer);
         });
     });
 
     debug('starting server...');
     ipc.server.start();
+}
+
+function handleSynServer(data, socket) {
+    debug('server got syn: ' + data);
+    debug('broadcasting syn: ' + data);
+    ipc.server.broadcast(constants.opcodes.syn, data);
+    stopServerAsync();
 }
 
 function stopServerAsync() {
