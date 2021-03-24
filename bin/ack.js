@@ -2,7 +2,7 @@
 
 const ipc = require('node-ipc');
 const constants = require('../lib/constants.js');
-
+const debug = require('debug')('ack');
 
 ipc.config.id = process.pid;
 ipc.config.retry = 1500;
@@ -14,27 +14,26 @@ startClientAsync();
 function startClientAsync() {
     ipc.connectTo(constants.appid, () => {
         ipc.of[constants.appid].on('error', (err) => {
-            console.log('no server found.');
             ipc.disconnect(constants.appid);
             startServerAsync();
         });
 
         ipc.of[constants.appid].on('connect', () => {
-            console.log('connected to server.');
+            debug('connected');
         });
 
         ipc.of[constants.appid].on(constants.opcodes.syn, (data, socket) => {
-            console.log('client got syn: ' + data);
+            debug('client got syn: ' + data);
             stopClientAsync();
         });
     });
 }
 
 function stopClientAsync() {
-    console.log('stopping client...');
+    debug('stopping client...');
     setTimeout(() => {
         ipc.disconnect(constants.appid);
-        console.log('stopping client... done.');
+        debug('stopping client... done.');
     }, 0);
 }
 
@@ -44,25 +43,24 @@ function startServerAsync() {
     let connectedSockets = [];
 
     ipc.serve(() => {
-        console.log('starting server... done.');
+        debug('starting server... done.');
 
         ipc.server.on(constants.opcodes.syn, (data, socket) => {
-            console.log('server got syn: ' + data);
-            console.log('broadcasting syn...');
-            ipc.server.broadcast(constants.opcodes.syn, 1);
-            console.log('broadcasting syn... done.');
+            debug('server got syn: ' + data);
+            debug('broadcasting syn: ' + data);
+            ipc.server.broadcast(constants.opcodes.syn, data);
             stopServerAsync();
         });
     });
 
-    console.log('starting server...');
+    debug('starting server...');
     ipc.server.start();
 }
 
 function stopServerAsync() {
-    console.log('stopping server...');
+    debug('stopping server...');
     setTimeout(() => {
         ipc.server.stop();
-        console.log('stopping server... done.');
+        debug('stopping server... done.');
     }, 0);
 }

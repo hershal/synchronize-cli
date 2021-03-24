@@ -2,16 +2,25 @@
 
 const ipc = require('node-ipc');
 const constants = require('../lib/constants.js');
+const debug = require('debug')('syn');
 
 
 ipc.config.id = 'syn';
 ipc.config.retry = 1500;
-ipc.config.logger = () => {};
+/* ipc.config.logger = () => {}; */
 
 ipc.connectTo(constants.appid, () => {
-    ipc.of[constants.appid].on('connect', (data) => {
-        ipc.of[constants.appid].emit(constants.opcodes.syn, 1);
-        setTimeout(() => { ipc.disconnect(constants.appid); }, 0);
+    debug('connecting...');
+    ipc.of[constants.appid].on('connect', () => {
+        debug('connecting... done.');
+        const data = 1;
+        debug('sent syn: ' + data);
+        ipc.of[constants.appid].emit(constants.opcodes.syn, data);
+        debug('disconnecting...');
+        setTimeout(() => {
+            ipc.disconnect(constants.appid);
+            debug('disconnecting... done.');
+        }, 0);
     });
 });
 
