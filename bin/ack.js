@@ -2,7 +2,7 @@
 
 const ipc = require('node-ipc');
 const constants = require('../lib/constants.js');
-
+const fs = require('fs');
 
 ipc.config.id = process.pid;
 ipc.config.retry = 1500;
@@ -13,11 +13,14 @@ ipc.connectTo(constants.appid, () => {
     ipc.of[constants.appid].on('error', (err) => {
         console.log('no server found.');
         ipc.disconnect(constants.appid);
+        unlinkServer();
         startServer();
     });
 
     ipc.of[constants.appid].on('connect', () => {
-        console.log('connected to server.');
+        console.log('server found');
+        ipc.disconnect(constants.appid);
+        startServer();
     });
 
     ipc.of[constants.appid].on(constants.opcodes.syn, (data, socket) => {
@@ -28,11 +31,18 @@ ipc.connectTo(constants.appid, () => {
 });
 
 
+function unlinkServer() {
+    if (fs.existsSync(constants.socketpath)) {
+        fs.unlinkSync(constants.socketpath);
+    }
+}
+
+
 function startServer() {
     ipc.config.id = constants.appid;
     let connectedSockets = [];
 
-    ipc.serve(() => {
+    ipc.serve(constants.socketpath, () => {
         console.log('starting server... done.');
 
         ipc.server.on(constants.opcodes.syn, (data, socket) => {
