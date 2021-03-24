@@ -10,7 +10,7 @@ ipc.config.retry = 1500;
 ipc.connectTo(constants.appid, () => {
     ipc.of[constants.appid].on('connect', (data) => {
         ipc.of[constants.appid].emit(constants.opcodes.syn, 1);
-        ipc.disconnect(constants.appid);
+        setTimeout(() => { ipc.disconnect(constants.appid); }, 0);
     });
 });
 
