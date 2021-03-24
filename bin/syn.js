@@ -8,6 +8,7 @@ const debug = require('debug')('syn');
 ipc.config.id = 'syn';
 ipc.config.retry = 1500;
 /* ipc.config.logger = () => {}; */
+ipc.config.stopRetrying = true;
 
 ipc.connectTo(constants.appid, () => {
     debug('connecting...');
