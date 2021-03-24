@@ -1,4 +1,4 @@
-'use strict';
+#!/usr/bin/env node
 
 const ipc = require('node-ipc');
 const constants = require('../lib/constants.js');

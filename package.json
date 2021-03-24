@@ -12,5 +12,9 @@
   "dependencies": {
     "node-ipc": "^9.1.4",
     "yargs": "^16.2.0"
+  },
+  "bin": {
+    "syn": "./bin/syn.js",
+    "ack": "./bin/ack.js"
   }
 }
