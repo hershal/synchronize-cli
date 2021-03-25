@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ava"
   },
   "keywords": [],
   "author": "",
@@ -17,5 +17,8 @@
   "bin": {
     "syn": "./bin/syn.js",
     "ack": "./bin/ack.js"
+  },
+  "devDependencies": {
+    "ava": "^3.15.0"
   }
 }
