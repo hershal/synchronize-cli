@@ -16,7 +16,7 @@ function wait(ms) {
 
 
 function run(command) {
-  return new Promise(async (res, rej) => {
+  return new Promise((res, rej) => {
     child_process.exec(`${__dirname}/../bin/${command}`, (err, stdout, stderr) => {
       if (err) { rej(err); } else { res(); }
     });
