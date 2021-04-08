@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "ava",
-    "watch": "ava -w"
+    "test": "ava -v -T 2s",
+    "watch": "ava -v -T 2s -w"
   },
   "keywords": [],
   "author": "",
