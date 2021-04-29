@@ -7,7 +7,7 @@ const process = require('process');
 process.env['DEBUG'] = '*';
 
 
-function wait(ms) {
+function settle(ms) {
   if (ms === undefined) { ms = 100; }
   return new Promise(resolve => {
     setTimeout(resolve, ms);
@@ -28,7 +28,7 @@ function run(command) {
 
 test.serial('basic ack/syn', async t => {
   const r = run("ack.js");
-  await wait();
+  await settle();
 
   await run("syn.js");
   await r.then(t.pass);
@@ -39,14 +39,40 @@ test.serial('multiple ack', async t => {
   let promises = [];
 
   promises.push(run("ack.js"));
-  await wait();
+  await settle();
   promises.push(run("ack.js"));
-  await wait();
+  await settle();
   promises.push(run("ack.js"));
-  await wait();
+  await settle();
 
   const r = Promise.all(promises);
 
   await run("syn.js");
   await r.then(t.pass);
+});
+
+
+test.serial('basic ack/syn with keyword', async t => {
+  const r = run("ack.js asdf");
+  r.then(t.fail);
+
+  await settle();
+
+  await run("syn.js");
+  await settle();
+
+  /* r should not have finished */
+  t.pass();
+});
+
+
+test.serial('basic multi ack/syn with keyword', async t => {
+  const r0 = run("ack.js");
+  const r1 = run("ack.js asdf");
+  r0.then(t.fail);
+
+  await settle();
+
+  await run("syn.js asdf");
+  await r1.then(t.pass);
 });
