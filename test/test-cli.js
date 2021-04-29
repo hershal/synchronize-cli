@@ -76,3 +76,16 @@ test.serial('basic multi ack/syn with keyword', async t => {
   await run("syn.js asdf");
   await r1.then(t.pass);
 });
+
+
+test.serial('complex multi ack/syn with keyword', async t => {
+  const r0 = run("ack.js");
+  const r1 = run("ack.js asdf");
+  const r2 = run("ack.js asdf");
+  r0.then(t.fail);
+
+  await settle();
+
+  await run("syn.js asdf");
+  await Promise.all([r1, r2]).then(t.pass);
+});
