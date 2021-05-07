@@ -29,7 +29,7 @@ ipc.connectTo(channel, () => {
   });
 
   ipc.of[channel].on('error', () => {
-    debug('no server found.');
+    debug('connecting... failed: no server found.');
   });
 });
 
