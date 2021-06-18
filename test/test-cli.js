@@ -4,7 +4,6 @@ const test = require('ava');
 const child_process = require('child_process');
 const process = require('process');
 
-
 process.env['DEBUG'] = '*';
 
 
@@ -29,7 +28,7 @@ function run(command) {
 
 /* Kill the tasks when we're done. We should get an unhandled exception error if
    something is still running and we never caught the exception. */
-test.after(t => { processes.forEach((p) => p.kill("SIGINT")); });
+test.afterEach.always(t => { processes.forEach((p) => p.kill("SIGINT")); processes = []; });
 
 
 
@@ -77,12 +76,12 @@ test.serial('basic ack/syn with keyword', async t => {
 
 
 test.serial('basic multi ack/syn with keyword', async t => {
-  const r0 = run("ack.js").then(t.fail);;
-  const r1 = run("ack.js asdf");
+  const r0 = run("ack.js").then(t.fail);
+  const r1 = run("ack.js single");
 
   await settle();
 
-  await run("syn.js asdf");
+  await run("syn.js single");
 
   /* allow r0 to die gracefully now */
   r0.catch(() => {});
@@ -93,14 +92,12 @@ test.serial('basic multi ack/syn with keyword', async t => {
 
 test.serial('complex multi ack/syn with keyword', async t => {
   const r0 = run("ack.js").then(t.fail);
-  const r1 = run("ack.js asdf");
-
-  /* avoid the race condition for r1 and r2 */
-  const r2 = await settle().then(run("ack.js asdf"));
+  const r1 = await settle().then(run("ack.js multi"));
+  const r2 = await settle().then(run("ack.js multi"));
 
   await settle();
 
-  await run("syn.js asdf");
+  await run("syn.js multi");
 
   /* allow the process to die gracefully now that we've set up the chain */
   r0.catch((e) => {});
