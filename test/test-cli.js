@@ -96,8 +96,7 @@ test.serial('complex multi ack/syn with keyword', async t => {
   const r1 = run("ack.js asdf");
 
   /* avoid the race condition for r1 and r2 */
-  await settle();
-  const r2 = run("ack.js asdf");
+  const r2 = await settle().then(run("ack.js asdf"));
 
   await settle();
 
