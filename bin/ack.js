@@ -1,81 +1,98 @@
 #!/usr/bin/env node
 
-const ipc = require('node-ipc');
 const constants = require('../lib/constants.js');
-const debug = require('debug')('ack');
 
-const args = process.argv.slice(2);
-const channel = args.length === 0 ? constants.appid : args[0];
-
-ipc.config.id = process.pid;
-ipc.config.retry = 1500;
-ipc.config.logger = () => {};
-
-startClientAsync(channel);
+const argv = require('yargs/yargs')(process.argv.slice(2))
+      .default('count', 1)
+      .argv;
 
 
-function handleSynClient(data, socket) {
-  debug('client got: ' + data);
-  stopClientAsync();
+let classObj = {
+  debug: require('debug')('ack'),
+  ipc: require('node-ipc'),
+  channel: "",
+  count: 1
+};
+
+
+main();
+
+
+function main() {
+  classObj.ipc.config.id = process.pid;
+  classObj.ipc.config.retry = 1500;
+  classObj.ipc.config.logger = () => {};
+
+  classObj.channel = argv._.length === 0 ? constants.appid : argv._[0];
+  classObj.count = argv.count;
+  startClientAsync(classObj);
 }
 
-function startClientAsync(channel) {
-  debug('channel: ' + channel);
-  debug('connecting...');
 
-  ipc.connectTo(channel, () => {
-    ipc.of[channel].on('error', (err) => {
-      debug('connecting... no server found');
-      ipc.disconnect(channel);
-      startServerAsync(channel);
+
+function handleSynClient(obj, data, socket) {
+  obj.debug('client got: ' + data);
+  stopClientAsync(obj);
+}
+
+function handleSynServer(obj, data, socket) {
+  obj.debug('server got: ' + data);
+  obj.debug('broadcasting: ' + data);
+  obj.ipc.server.broadcast(constants.opcodes.syn, data);
+
+  stopServerAsync(obj);
+}
+
+
+
+function startClientAsync(obj) {
+  obj.debug('channel: ' + obj.channel);
+  obj.debug('count: ' + obj.count);
+
+  obj.debug('connecting...');
+
+  obj.ipc.connectTo(obj.channel, () => {
+    obj.ipc.of[obj.channel].on('error', (err) => {
+      obj.debug('connecting... no server found');
+      obj.ipc.disconnect(obj.channel);
+      startServerAsync(obj);
     });
 
-    ipc.of[channel].on('connect', () => {
-      debug('connecting... done.');
+    obj.ipc.of[obj.channel].on('connect', () => {
+      obj.debug('connecting... done.');
     });
 
-    ipc.of[channel].on(constants.opcodes.syn, (data, socket) => {
-      handleSynClient(data,socket);
+    obj.ipc.of[obj.channel].on(constants.opcodes.syn, (data, socket) => {
+      handleSynClient(obj, data, socket);
     });
   });
 }
 
-function stopClientAsync() {
-  debug('stopping client...');
-  setTimeout(() => {
-    ipc.disconnect(channel);
-    debug('stopping client... done.');
-  }, 0);
+function stopClientAsync(obj) {
+  obj.debug('stopping client...');
+  obj.ipc.disconnect(obj.channel);
+  obj.debug('stopping client... done.');
 }
 
 
-function startServerAsync(channel) {
-  ipc.config.id = channel;
+function startServerAsync(obj) {
+  obj.ipc.config.id = obj.channel;
   let connectedSockets = [];
-  debug('starting server...');
+  obj.debug('starting server...');
 
-  ipc.serve(() => {
-    debug('starting server... done.');
+  obj.ipc.serve(() => {
+    obj.debug('starting server... done.');
 
-    ipc.server.on(constants.opcodes.syn, (data, socket) => {
-      handleSynServer(data, socket);
+    obj.ipc.server.on(constants.opcodes.syn, (data, socket) => {
+      handleSynServer(obj, data, socket);
     });
   });
 
-  ipc.server.start();
+  obj.ipc.server.start();
 }
 
-function handleSynServer(data, socket) {
-  debug('server got: ' + data);
-  debug('broadcasting: ' + data);
-  ipc.server.broadcast(constants.opcodes.syn, data);
-  stopServerAsync();
-}
-
-function stopServerAsync() {
-  debug('stopping server...');
-  setTimeout(() => {
-    ipc.server.stop();
-    debug('stopping server... done.');
-  }, 0);
+function stopServerAsync(obj) {
+  obj.debug('stopping server...');
+  obj.ipc.server.stop();
+  obj.debug('stopping server... done.');
 }
