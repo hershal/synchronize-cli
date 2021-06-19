@@ -92,15 +92,19 @@ test.serial('basic multi ack/syn with keyword', async t => {
 
 test.serial('complex multi ack/syn with keyword', async t => {
   const r0 = run("ack.js").then(t.fail);
-  const r1 = await settle().then(run("ack.js multi"));
-  const r2 = await settle().then(run("ack.js multi"));
+
+  /* Try to avoid race conditions */
+  const r1 = run("ack.js multi");
+  await settle();
+  const r2 = run("ack.js multi");
+
+  const p = Promise.all([r1, r2]).then(t.pass);
 
   await settle();
-
   await run("syn.js multi");
 
   /* allow the process to die gracefully now that we've set up the chain */
   r0.catch((e) => {});
 
-  await Promise.all([r1, r2]).then(t.pass);
+  await p;
 });
