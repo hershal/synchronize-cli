@@ -3,9 +3,11 @@
 const ipc = require('node-ipc');
 const constants = require('../lib/constants.js');
 const debug = require('debug')('syn');
+const argv = require('yargs/yargs')(process.argv.slice(2))
+      .default('count', 1)
+      .argv;
 
-const args = process.argv.slice(2);
-const channel = args.length === 0 ? constants.appid : args[0];
+const channel = argv._.length === 0 ? constants.appid : argv._[0];
 
 ipc.config.id = 'syn';
 ipc.config.retry = 1500;
@@ -18,7 +20,7 @@ ipc.connectTo(channel, () => {
 
   ipc.of[channel].on('connect', () => {
     debug('connecting... done.');
-    const data = 'synchronize';
+    const data = 1;
     debug('sent: ' + data);
     ipc.of[channel].emit(constants.opcodes.syn, data);
     debug('disconnecting...');
