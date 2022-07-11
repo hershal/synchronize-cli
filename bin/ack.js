@@ -10,7 +10,7 @@ const argv = require('yargs/yargs')(process.argv.slice(2))
 
 
 
-function main() {
+async function main() {
     const channel = argv._[0];
     const count = argv.count;
     const debug = argv.debug;
@@ -20,7 +20,6 @@ function main() {
 
     process.on('SIGINT', () => {
         server.stop();
-        process.exit(0);
     });
 }
 
