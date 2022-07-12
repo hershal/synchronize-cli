@@ -168,3 +168,21 @@ test.serial('syn to kill ack servers', async t => {
     t.pass();
 
 });
+
+test.serial('ack to kill ack servers', async t => {
+    const uid = uuid();
+
+    const promises = Array(3).fill('promise')
+    const count = (p) => p.reduce((a, c) => c === 'rejected' ? a+1 : a, 0);
+
+    const r0 = run(`ack.js ${uid}`).catch(() => promises[0] = 'rejected'); await settle();
+    const r1 = run(`ack.js ${uid}`).catch(() => promises[1] = 'rejected'); await settle();
+    const r2 = run(`ack.js ${uid}`).catch(() => promises[2] = 'rejected'); await settle();
+
+    await run(`ack.js --kill ${uid}`);
+    await settleLong();
+
+    t.is(count(promises), 3);
+    t.pass();
+
+});
