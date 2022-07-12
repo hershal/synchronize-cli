@@ -2,10 +2,7 @@
 
 const test = require('ava');
 const child_process = require('child_process');
-const process = require('process');
 const uuid = require('../lib/uuid');
-
-process.env['DEBUG'] = '*';
 
 
 function settle(ms) {

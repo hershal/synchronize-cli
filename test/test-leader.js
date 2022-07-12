@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const child_process = require('child_process');
-const process = require('../lib/process.js');
 const uuid = require('../lib/uuid.js');
 
 
