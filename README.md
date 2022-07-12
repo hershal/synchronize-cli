@@ -1,5 +1,8 @@
 # Synchronize CLI
 
+![CI Status](https://github.com/hershal/synchronize-cli/actions/workflows/node.js.yml/badge.svg)
+
+
 Concurrency tools in your CLI.
 
 Synchronize lets you chain long-running tasks together so you can do less babysitting and take longer coffee breaks.
