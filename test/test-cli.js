@@ -133,21 +133,23 @@ test.serial('complex multi ack/syn with keyword', async t => {
 
 
 test.serial('basic ack with count', async t => {
-  const r0 = run("ack.js --count 1");
-  await settle();
-  const r1 = run("ack.js --count 2");
-  await settle();
-  const r2 = run("ack.js --count 3");
-  await settle();
+    const uid = uuid();
 
-  await run("syn.js");
-  await settle();
+    const r0 = run(`ack.js ${uid} --count 1`);
+    await settle();
+    const r1 = run(`ack.js ${uid} --count 2`);
+    await settle();
+    const r2 = run(`ack.js ${uid} --count 3`);
+    await settle();
 
-  await run("syn.js");
-  await settle();
+    await run(`syn.js ${uid}`);
+    await settle();
 
-  r2.then(t.fail).catch(() => {});
-  await Promise.all([r0, r1]).then(t.pass);
+    await run(`syn.js ${uid}`);
+    await settle();
+
+    r2.then(t.fail).catch(() => {});
+    await Promise.all([r0, r1]).then(t.pass);
 });
 
 
