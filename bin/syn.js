@@ -8,6 +8,7 @@ const argv = require('yargs/yargs')(process.argv.slice(2))
       .argv;
 
 const channel = argv._.length === 0 ? constants.appid : argv._[0];
+const count = argv.count;
 
 ipc.config.id = 'syn';
 ipc.config.retry = 1500;
@@ -20,7 +21,7 @@ ipc.connectTo(channel, () => {
 
   ipc.of[channel].on('connect', () => {
     debug('connecting... done.');
-    const data = 1;
+    const data = count;
     debug('sent: ' + data);
     ipc.of[channel].emit(constants.opcodes.syn, data);
     debug('disconnecting...');
