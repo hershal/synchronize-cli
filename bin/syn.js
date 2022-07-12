@@ -15,33 +15,75 @@ ipc.config.retry = 1500;
 ipc.config.logger = () => {};
 ipc.config.stopRetrying = count;
 
-ipc.connectTo(channel, () => {
-  debug('channel: ' + channel);
-  debug('connecting...');
+let pause = false;
+let kill = false;
+connect();
 
-  ipc.of[channel].on('connect', () => {
-    debug('connecting... done.');
+function connect() {
+    ipc.connectTo(channel, () => {
+        debug('channel: ' + channel);
+        debug('connecting...');
 
-    sendSyn(count);
+        ipc.of[channel].on('connect', () => {
+            if (kill == true) { return; }
 
-    debug('disconnecting...');
-    setTimeout(() => {
-      ipc.disconnect(channel);
-      debug('disconnecting... done.');
-    }, 0);
-  });
+            debug('connecting... done.');
+            if (pause == true) {
+                debug('unpausing')
+                pause = false;
+            } else {
+                debug('initiating sendSyn');
+                setTimeout(() => sendSyn(count), 0);
+            }
+        });
 
-  ipc.of[channel].on('error', () => {
-    debug('connecting... failed: no server found.');
-  });
-});
+        ipc.of[channel].on('disconnect', () => {
+            debug('got disconnect');
+        })
+
+        ipc.of[channel].on(constants.opcodes.stop, () => {
+            if (kill == true) { return; }
+
+            debug('got stop, disconnecting and reconnecting');
+            debug('pausing')
+
+            pause = true;
+
+            ipc.disconnect(channel);
+            setTimeout(() => connect(), 100);
+        })
+
+        ipc.of[channel].on('error', () => {
+            if (kill == true) { return; }
+
+            kill = true;
+            debug('connecting... failed: no server found. Killing.');
+        });
+    });
+
+}
 
 
 function sendSyn(count) {
+    if (kill == true) { return; }
+
     if (count > 0) {
+        const newcount = count - 1;
         const data = 1;
-        debug('sent: ' + data);
-        ipc.of[channel].emit(constants.opcodes.syn, data);
-        sendSyn(count-1);
+
+        if (pause) {
+            debug(`sendSyn: waiting with count: ${count}`);
+            setTimeout(() => sendSyn(count), 1000);
+        } else {
+            debug(`sendSyn: sent: ${data}, count: ${count} -> ${newcount}`);
+            ipc.of[channel].emit(constants.opcodes.syn, data);
+            setTimeout(() => sendSyn(newcount), 1000);
+        }
+    } else {
+        debug('sendSyn: disconnecting...');
+        setTimeout(() => {
+            ipc.disconnect(channel);
+            debug('sendSyn: disconnecting... done.');
+        }, 0);
     }
 }
