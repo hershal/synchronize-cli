@@ -132,7 +132,6 @@ test.serial('complex multi ack/syn with keyword', async t => {
 });
 
 
-
 test.serial('basic ack with count', async t => {
   const r0 = run("ack.js --count 1");
   await settle();
@@ -149,4 +148,23 @@ test.serial('basic ack with count', async t => {
 
   r2.then(t.fail).catch(() => {});
   await Promise.all([r0, r1]).then(t.pass);
+});
+
+
+test.serial('syn to kill ack servers', async t => {
+    const uid = uuid();
+
+    const promises = Array(3).fill('promise')
+    const count = (p) => p.reduce((a, c) => c === 'rejected' ? a+1 : a, 0);
+
+    const r0 = run(`ack.js ${uid}`).catch(() => promises[0] = 'rejected'); await settle();
+    const r1 = run(`ack.js ${uid}`).catch(() => promises[1] = 'rejected'); await settle();
+    const r2 = run(`ack.js ${uid}`).catch(() => promises[2] = 'rejected'); await settle();
+
+    await run(`syn.js --kill ${uid}`);
+    await settleLong();
+
+    t.is(count(promises), 3);
+    t.pass();
+
 });

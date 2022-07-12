@@ -16,10 +16,15 @@ async function main() {
     const debug = argv.debug;
 
     const server = new AckServer(process.pid, channel, count, debug);
-    server.start();
+    const promise = server.start();
 
     process.on('SIGINT', () => {
         server.stop();
+    });
+
+    promise.catch((err) => {
+        console.log(err);
+        process.exit(1);
     });
 }
 
