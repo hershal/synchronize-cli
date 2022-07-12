@@ -168,7 +168,6 @@ test.serial('syn to kill ack servers', async t => {
 
     t.is(count(promises), 3);
     t.pass();
-
 });
 
 test.serial('ack to kill ack servers', async t => {
@@ -186,5 +185,4 @@ test.serial('ack to kill ack servers', async t => {
 
     t.is(count(promises), 3);
     t.pass();
-
 });

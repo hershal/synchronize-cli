@@ -2,6 +2,7 @@
 
 const SynClient = require('../lib/syn.js').SynClient;
 
+
 const argv = require('yargs/yargs')(process.argv.slice(2))
       .number('count')
       .default('count', 1)
@@ -18,8 +19,9 @@ const argv = require('yargs/yargs')(process.argv.slice(2))
       .string('_')
       .describe('_', 'Channel to send signals on')
 
-      .usage('$0 [--debug] [--kill] [--count=n] [channel]',
-             'Synchronize tasks on a signal. Part of synchronize-cli.')
+      .usage('Synchronize tasks on a signal.\n'+
+             'Usage: $0 [--debug] [--kill] [--count=n] [channel]')
+      .epilog('Part of synchronize-cli.')
       .argv;
 
 

@@ -71,7 +71,7 @@ test.serial('trigger race condition', async t => {
     r5.catch(() => {});
     r6.catch(() => {});
     t.pass();
-})
+});
 
 
 test.serial('test multiple acks', async t => {

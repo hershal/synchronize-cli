@@ -16,8 +16,9 @@ const argv = require('yargs/yargs')(process.argv.slice(2))
       .default('kill', false)
       .describe('kill', 'Send kill command to everyone on the channel')
 
-      .usage('$0 [--debug] [--kill] [--count=n] [channel]',
-             'Synchronize tasks on a signal. Part of synchronize-cli.')
+      .usage('Synchronize tasks on a signal.\n'+
+             'Usage: $0 [--debug] [--kill] [--count=n] [channel]')
+      .epilog('Part of synchronize-cli.')
       .argv;
 
 
