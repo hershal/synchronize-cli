@@ -13,7 +13,7 @@ const count = argv.count;
 ipc.config.id = 'syn';
 ipc.config.retry = 1500;
 ipc.config.logger = () => {};
-ipc.config.stopRetrying = true;
+ipc.config.stopRetrying = count;
 
 ipc.connectTo(channel, () => {
   debug('channel: ' + channel);
@@ -21,9 +21,9 @@ ipc.connectTo(channel, () => {
 
   ipc.of[channel].on('connect', () => {
     debug('connecting... done.');
-    const data = count;
-    debug('sent: ' + data);
-    ipc.of[channel].emit(constants.opcodes.syn, data);
+
+    sendSyn(count);
+
     debug('disconnecting...');
     setTimeout(() => {
       ipc.disconnect(channel);
@@ -36,3 +36,12 @@ ipc.connectTo(channel, () => {
   });
 });
 
+
+function sendSyn(count) {
+    if (count > 0) {
+        const data = 1;
+        debug('sent: ' + data);
+        ipc.of[channel].emit(constants.opcodes.syn, data);
+        sendSyn(count-1);
+    }
+}
