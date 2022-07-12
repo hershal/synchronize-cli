@@ -153,6 +153,32 @@ test.serial('basic ack with count', async t => {
 });
 
 
+test.serial('basic ack with count 2', async t => {
+    const uid = uuid();
+
+    const status = [0, 0, 0];
+    const count = () => status.reduce((a, b) => a + b, 0);
+
+    const r0 = run(`ack.js ${uid} --count 2`).then(() => status[0] = 1); await settle();
+    const r1 = run(`ack.js ${uid} --count 2`).then(() => status[1] = 1); await settle();
+    const r2 = run(`ack.js ${uid} --count 3`).then(() => status[2] = 1); await settle();
+
+    t.is(count(), 0);
+
+    await run(`syn.js ${uid} --count 2`);
+    await settle();
+
+    t.is(count(), 2);
+
+    await run(`syn.js ${uid}`);
+    await settle();
+
+    t.is(count(), 3);
+
+    await Promise.all([r0, r1, r2]).then(t.pass);
+});
+
+
 test.serial('syn to kill ack servers', async t => {
     const uid = uuid();
 
@@ -169,6 +195,7 @@ test.serial('syn to kill ack servers', async t => {
     t.is(count(promises), 3);
     t.pass();
 });
+
 
 test.serial('ack to kill ack servers', async t => {
     const uid = uuid();
