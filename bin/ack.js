@@ -42,7 +42,7 @@ async function main() {
 
     process.on('SIGINT', () => {
         servers.forEach((s) => s.stop());
-        Promise.all(promises).then(() => process.exit(2));
+        Promise.all(promises).then(() => process.exit(1));
     });
 }
 

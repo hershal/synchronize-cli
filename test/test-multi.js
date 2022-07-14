@@ -149,7 +149,7 @@ test.serial('ack killing all servers on kill signal', async t => {
     const uid3 = uuid();
 
     let resolved = false;
-    /* should exit with exit code 1 on SIGINT */
+    /* should exit with exit code 1 */
     const r = run(`ack.js ${uid} ${uid2} ${uid3} --count 2`)
           .catch(() => resolved = true)
     await settle();
