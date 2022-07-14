@@ -34,16 +34,15 @@ async function main() {
     const servers = channels.map((channel) => new AckServer(process.pid, {...config, channel}))
 
     const promises = servers.map((s) => {
-        setTimeout(() =>  {
-            s.start().catch((err) => {
-                console.log(err);
-                process.exit(1);
-            });
-        }, 0);
+        s.start().catch((err) => {
+            console.log(err);
+            process.exit(1);
+        });
     });
 
     process.on('SIGINT', () => {
         servers.forEach((s) => s.stop());
+        Promise.all(promises).then(() => process.exit(2));
     });
 }
 
