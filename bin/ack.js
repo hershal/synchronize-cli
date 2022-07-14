@@ -45,8 +45,6 @@ async function main() {
     process.on('SIGINT', () => {
         servers.forEach((s) => s.stop());
     });
-
-    //await Promise.all(servers);
 }
 
 
