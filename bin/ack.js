@@ -24,24 +24,29 @@ const argv = require('yargs/yargs')(process.argv.slice(2))
 
 
 async function main() {
-    const channel = argv._[0];
+    const channels = argv._.length == 0 ? [undefined] : argv._;
     const count = argv.count;
     const debug = argv.debug;
     const kill = argv.kill;
 
-    const config = {channel, count, debug, kill};
+    const config = {count, debug, kill};
 
-    const server = new AckServer(process.pid, config);
-    const promise = server.start();
+    const servers = channels.map((channel) => new AckServer(process.pid, {...config, channel}))
+
+    const promises = servers.map((s) => {
+        setTimeout(() =>  {
+            s.start().catch((err) => {
+                console.log(err);
+                process.exit(1);
+            });
+        }, 0);
+    });
 
     process.on('SIGINT', () => {
-        server.stop();
+        servers.forEach((s) => s.stop());
     });
 
-    promise.catch((err) => {
-        console.log(err);
-        process.exit(1);
-    });
+    //await Promise.all(servers);
 }
 
 
