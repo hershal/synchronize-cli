@@ -21,25 +21,38 @@ function settleLong(ms) {
 }
 
 
-var processes = [];
+let processes = [];
+let processes_exited = [];
 
 function run(command) {
-  return new Promise((res, rej) => {
-      const child = child_process.exec(`${__dirname}/../bin/${command}`, (err, stdout, stderr) => {
-        /* console.log(stdout) */
-        if (err) { rej(err); } else { res(); }
+    return new Promise((res, rej) => {
+        const idx = processes_exited.length;
+        const child = child_process.exec(`${__dirname}/../bin/${command}`, (err, stdout, stderr) => {
+            /* console.log(stdout) */
+            if (err) {
+                processes_exited[idx] = true;
+                rej(err);
+            } else {
+                processes_exited[idx] = true;
+                res();
+            }
+        });
+        processes.push(child);
+        processes_exited.push(false);
     });
-    processes.push(child);
-  });
 }
 
 /* Kill the tasks when we're done. We should get an unhandled exception error if
    something is still running and we never caught the exception. */
-test.afterEach.always(t => { processes.forEach((p) => p.kill("SIGTERM")); processes = []; });
+test.after(t => {
+    const all_exited = processes_exited.every((el) => el === true);
+    processes.forEach((p) => p.kill("SIGTERM"));
+    t.is(all_exited, true);
+});
 
 
 
-test.serial('basic ack/syn', async t => {
+test('basic ack/syn', async t => {
   const uid = uuid();
 
   const r = run(`ack.js ${uid}`);
@@ -50,7 +63,7 @@ test.serial('basic ack/syn', async t => {
 });
 
 
-test.serial('multiple ack', async t => {
+test('multiple ack', async t => {
   const uid = uuid();
   let promises = [];
 
@@ -68,89 +81,98 @@ test.serial('multiple ack', async t => {
 });
 
 
-test.serial('basic ack/syn with keyword', async t => {
-  const uid = uuid();
-  const uid2 = uuid();
+test('basic ack/syn with keyword', async t => {
+    const uid = uuid();
+    const uid2 = uuid();
 
-  const r = run(`ack.js ${uid}`);
-  const f = r.then(t.fail);
+    let exited = false;
+    const r = run(`ack.js ${uid}`).then(() => exited = true);
+    await settle();
+    t.is(exited, false);
 
-  await settle();
+    await run(`syn.js ${uid2}`);
+    await settle();
+    t.is(exited, false);
 
-  await run(`syn.js ${uid2}`);
-  await settle();
+    await run(`syn.js ${uid}`);
+    await settle();
+    t.is(exited, true);
 
-  /* allow the process to die gracefully now */
-  f.catch(() => {});
-
-  /* r should not have finished */
-  t.pass();
+    r.then(() => t.pass);
 });
 
 
-test.serial('basic multi ack/syn with keyword', async t => {
-  const uid = uuid();
-  const uid2 = uuid();
+test('basic multi ack/syn with keyword', async t => {
+    const uid = uuid();
+    const uid2 = uuid();
 
-  const r0 = run(`ack.js ${uid}`).then(t.fail);
-  const r1 = run(`ack.js ${uid2}`);
+    const exited = [false, false];
+    const r0 = run(`ack.js ${uid}`).then(() => exited[0] = true);
+    const r1 = run(`ack.js ${uid2}`).then(() => exited[1] = true);
 
-  await settle();
+    await settle();
 
-  await run(`syn.js ${uid2}`);
+    await run(`syn.js ${uid2}`);
+    t.deepEqual(exited, [false, true])
 
-  /* allow r0 to die gracefully now */
-  r0.catch(() => {});
+    await run(`syn.js ${uid}`);
+    t.deepEqual(exited, [true, true])
 
-  await r1.then(t.pass);
+    Promise.all([r0, r1]).then(t.pass);
 });
 
 
-test.serial('complex multi ack/syn with keyword', async t => {
-  const uid = uuid();
-  const uid2 = uuid();
+test('complex multi ack/syn with keyword', async t => {
+    const uid = uuid();
+    const uid2 = uuid();
 
-  const r0 = run(`ack.js ${uid}`).then(t.fail);
+    const exited = [false, false, false];
+    const r0 = run(`ack.js ${uid}`).then(() => exited[0] = true);
 
-  /* Try to avoid race conditions */
-  const r1 = run(`ack.js ${uid2}`);
-  await settle();
-  const r2 = run(`ack.js ${uid2}`);
+    /* Try to avoid race conditions */
+    const r1 = run(`ack.js ${uid2}`).then(() => exited[1] = true);
+    await settle();
+    const r2 = run(`ack.js ${uid2}`).then(() => exited[2] = true);
 
-  const p = Promise.all([r1, r2]).then(t.pass);
+    await settle();
+    await run(`syn.js ${uid2}`);
+    t.deepEqual(exited, [false, true, true]);
 
-  await settle();
-  await run(`syn.js ${uid2}`);
+    await run(`syn.js ${uid}`);
+    t.deepEqual(exited, [true, true, true]);
 
-  /* allow the process to die gracefully now that we've set up the chain */
-  r0.catch((e) => {});
-
-  await p;
+    Promise.all([r0, r1, r2]).then(t.pass);
 });
 
 
-test.serial('basic ack with count', async t => {
+test('basic ack with count', async t => {
     const uid = uuid();
 
-    const r0 = run(`ack.js ${uid} --count 1`);
+    const exited = [false, false, false];
+    const r0 = run(`ack.js ${uid} --count 1`).then(() => exited[0] = true);
     await settle();
-    const r1 = run(`ack.js ${uid} --count 2`);
+    const r1 = run(`ack.js ${uid} --count 2`).then(() => exited[1] = true);
     await settle();
-    const r2 = run(`ack.js ${uid} --count 3`);
-    await settle();
-
-    await run(`syn.js ${uid}`);
+    const r2 = run(`ack.js ${uid} --count 3`).then(() => exited[2] = true);
     await settle();
 
     await run(`syn.js ${uid}`);
     await settle();
+    t.deepEqual(exited, [true, false, false]);
 
-    r2.then(t.fail).catch(() => {});
-    await Promise.all([r0, r1]).then(t.pass);
+    await run(`syn.js ${uid}`);
+    await settle();
+    t.deepEqual(exited, [true, true, false]);
+
+    await run(`syn.js ${uid}`);
+    await settle();
+    t.deepEqual(exited, [true, true, true]);
+
+    Promise.all([r0, r1, r2]).then(t.pass);
 });
 
 
-test.serial('basic ack with count 2', async t => {
+test('basic ack with count 2', async t => {
     const uid = uuid();
 
     const status = [0, 0, 0];
@@ -176,7 +198,7 @@ test.serial('basic ack with count 2', async t => {
 });
 
 
-test.serial('syn to kill ack servers', async t => {
+test('syn to kill ack servers', async t => {
     const uid = uuid();
 
     const promises = Array(3).fill('promise')
@@ -194,7 +216,7 @@ test.serial('syn to kill ack servers', async t => {
 });
 
 
-test.serial('ack to kill ack servers', async t => {
+test('ack to kill ack servers', async t => {
     const uid = uuid();
 
     const promises = Array(3).fill('promise')
