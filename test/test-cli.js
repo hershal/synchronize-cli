@@ -110,12 +110,14 @@ test('basic multi ack/syn with keyword', async t => {
     const r0 = run(`ack.js ${uid}`).then(() => exited[0] = true);
     const r1 = run(`ack.js ${uid2}`).then(() => exited[1] = true);
 
-    await settle();
+    await settleLong();
 
     await run(`syn.js ${uid2}`);
+    await settle();
     t.deepEqual(exited, [false, true])
 
     await run(`syn.js ${uid}`);
+    await settle();
     t.deepEqual(exited, [true, true])
 
     Promise.all([r0, r1]).then(t.pass);
@@ -131,10 +133,10 @@ test('complex multi ack/syn with keyword', async t => {
 
     /* Try to avoid race conditions */
     const r1 = run(`ack.js ${uid2}`).then(() => exited[1] = true);
-    await settle();
+    await settleLong();
     const r2 = run(`ack.js ${uid2}`).then(() => exited[2] = true);
 
-    await settle();
+    await settleLong();
     await run(`syn.js ${uid2}`);
     t.deepEqual(exited, [false, true, true]);
 
@@ -154,18 +156,18 @@ test('basic ack with count', async t => {
     const r1 = run(`ack.js ${uid} --count 2`).then(() => exited[1] = true);
     await settle();
     const r2 = run(`ack.js ${uid} --count 3`).then(() => exited[2] = true);
-    await settle();
+    await settleLong();
 
     await run(`syn.js ${uid}`);
-    await settle();
+    await settleLong();
     t.deepEqual(exited, [true, false, false]);
 
     await run(`syn.js ${uid}`);
-    await settle();
+    await settleLong();
     t.deepEqual(exited, [true, true, false]);
 
     await run(`syn.js ${uid}`);
-    await settle();
+    await settleLong();
     t.deepEqual(exited, [true, true, true]);
 
     Promise.all([r0, r1, r2]).then(t.pass);
@@ -205,8 +207,11 @@ test('syn to kill ack servers', async t => {
     const count = (p) => p.reduce((a, c) => c === 'rejected' ? a+1 : a, 0);
 
     const r0 = run(`ack.js ${uid}`).catch(() => promises[0] = 'rejected'); await settle();
+    await settle();
     const r1 = run(`ack.js ${uid}`).catch(() => promises[1] = 'rejected'); await settle();
+    await settle();
     const r2 = run(`ack.js ${uid}`).catch(() => promises[2] = 'rejected'); await settle();
+    await settleLong();
 
     await run(`syn.js --kill ${uid}`);
     await settleLong();
@@ -225,6 +230,7 @@ test('ack to kill ack servers', async t => {
     const r0 = run(`ack.js ${uid}`).catch(() => promises[0] = 'rejected'); await settle();
     const r1 = run(`ack.js ${uid}`).catch(() => promises[1] = 'rejected'); await settle();
     const r2 = run(`ack.js ${uid}`).catch(() => promises[2] = 'rejected'); await settle();
+    await settleLong();
 
     await run(`ack.js --kill ${uid}`);
     await settleLong();
