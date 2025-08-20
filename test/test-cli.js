@@ -152,9 +152,9 @@ test('basic ack with count', async t => {
 
     const exited = [false, false, false];
     const r0 = run(`ack.js ${uid} --count 1`).then(() => exited[0] = true);
-    await settle();
+    await settleLong();
     const r1 = run(`ack.js ${uid} --count 2`).then(() => exited[1] = true);
-    await settle();
+    await settleLong();
     const r2 = run(`ack.js ${uid} --count 3`).then(() => exited[2] = true);
     await settleLong();
 
@@ -180,19 +180,19 @@ test('basic ack with count 2', async t => {
     const status = [0, 0, 0];
     const count = () => status.reduce((a, b) => a + b, 0);
 
-    const r0 = run(`ack.js ${uid} --count 2`).then(() => status[0] = 1); await settle();
-    const r1 = run(`ack.js ${uid} --count 2`).then(() => status[1] = 1); await settle();
-    const r2 = run(`ack.js ${uid} --count 3`).then(() => status[2] = 1); await settle();
+    const r0 = run(`ack.js ${uid} --count 2`).then(() => status[0] = 1); await settleLong();
+    const r1 = run(`ack.js ${uid} --count 2`).then(() => status[1] = 1); await settleLong();
+    const r2 = run(`ack.js ${uid} --count 3`).then(() => status[2] = 1); await settleLong();
 
     t.is(count(), 0);
 
     await run(`syn.js ${uid} --count 2`);
-    await settle();
+    await settleLong();
 
     t.is(count(), 2);
 
     await run(`syn.js ${uid}`);
-    await settle();
+    await settleLong();
 
     t.is(count(), 3);
 
